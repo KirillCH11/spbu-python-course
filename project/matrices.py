@@ -54,7 +54,7 @@ def matrix_multiply(
     for i in range(rows1):
         row = []
         for j in range(cols2):
-            sum_val = 0
+            sum_val = 0.0
             for k in range(cols1):
                 sum_val += matrix1[i][k] * matrix2[k][j]
             row.append(sum_val)

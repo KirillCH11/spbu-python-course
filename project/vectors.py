@@ -19,7 +19,7 @@ def dot_product(vec1: List[float], vec2: List[float]) -> float:
     if len(vec1) != len(vec2):
         raise ValueError("Некорректный ввод: векторы должны быть одинаковой длины!")
     else:
-        result = 0
+        result = 0.0
         for i in range(len(vec1)):
             result += vec1[i] * vec2[i]
         return result
@@ -33,7 +33,7 @@ def vector_length(vec: List[float]) -> float:
     Returns:
         Длина вектора
     """
-    sm_sq = 0
+    sm_sq = 0.0
     for num in vec:
         sm_sq += num**2
     return sqrt(sm_sq)
