@@ -1,7 +1,9 @@
 from typing import List
 
 
-def matrix_add(matrix1: List[List[float]], matrix2: List[List[float]]) -> List[List[float]]:
+def matrix_add(
+    matrix1: List[List[float]], matrix2: List[List[float]]
+) -> List[List[float]]:
     """
     Складывает две матрицы.
     Args:
@@ -27,7 +29,9 @@ def matrix_add(matrix1: List[List[float]], matrix2: List[List[float]]) -> List[L
     return result
 
 
-def matrix_multiply(matrix1: List[List[float]], matrix2: List[List[float]]) -> List[List[float]]:
+def matrix_multiply(
+    matrix1: List[List[float]], matrix2: List[List[float]]
+) -> List[List[float]]:
     """
     Умножает две матрицы.
     Args:
@@ -42,7 +46,9 @@ def matrix_multiply(matrix1: List[List[float]], matrix2: List[List[float]]) -> L
     rows2, cols2 = len(matrix2), len(matrix2[0])
 
     if cols1 != rows2:
-        raise ValueError("Число столбцов первой матрицы должно равняться числу строк второй!")
+        raise ValueError(
+            "Число столбцов первой матрицы должно равняться числу строк второй!"
+        )
 
     result = []
     for i in range(rows1):

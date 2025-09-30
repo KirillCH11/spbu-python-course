@@ -35,7 +35,7 @@ def vector_length(vec: List[float]) -> float:
     """
     sm_sq = 0
     for num in vec:
-        sm_sq += num ** 2
+        sm_sq += num**2
     return sqrt(sm_sq)
 
 
