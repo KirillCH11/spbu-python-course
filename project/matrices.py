@@ -5,20 +5,23 @@ def matrix_add(
     matrix1: List[List[float]], matrix2: List[List[float]]
 ) -> List[List[float]]:
     """
-    Складывает две матрицы.
+    Adds two matrices.
+
     Args:
-        matrix1: Первая матрица (список списков)
-        matrix2: Вторая матрица (список списков)
+        matrix1: First matrix (list of lists)
+        matrix2: Second matrix (list of lists)
+
     Returns:
-        Сумма матриц
+        Sum of matrices
+
     Raises:
-        ValueError: Если матрицы разных размеров
+        ValueError: If matrices have different dimensions
     """
     rows1, cols1 = len(matrix1), len(matrix1[0])
     rows2, cols2 = len(matrix2), len(matrix2[0])
 
     if rows1 != rows2 or cols1 != cols2:
-        raise ValueError("Матрицы должны быть одинакового размера!")
+        raise ValueError("Matrices must have the same dimensions!")
 
     result = []
     for i in range(rows1):
@@ -33,21 +36,24 @@ def matrix_multiply(
     matrix1: List[List[float]], matrix2: List[List[float]]
 ) -> List[List[float]]:
     """
-    Умножает две матрицы.
+    Multiplies two matrices.
+
     Args:
-        matrix1: Первая матрица (список списков)
-        matrix2: Вторая матрица (список списков)
+        matrix1: First matrix (list of lists)
+        matrix2: Second matrix (list of lists)
+
     Returns:
-        Произведение матриц
+        Product of matrices
+
     Raises:
-        ValueError: Если матрицы невозможно перемножить
+        ValueError: If matrices cannot be multiplied
     """
     rows1, cols1 = len(matrix1), len(matrix1[0])
     rows2, cols2 = len(matrix2), len(matrix2[0])
 
     if cols1 != rows2:
         raise ValueError(
-            "Число столбцов первой матрицы должно равняться числу строк второй!"
+            "Number of columns of the first matrix must equal number of rows of the second matrix!"
         )
 
     result = []
@@ -64,11 +70,13 @@ def matrix_multiply(
 
 def matrix_transpose(matrix: List[List[float]]) -> List[List[float]]:
     """
-    Транспонирует матрицу.
+    Transposes a matrix.
+
     Args:
-        matrix: Исходная матрица (список списков)
+        matrix: Input matrix (list of lists)
+
     Returns:
-        Транспонированная матрица
+        Transposed matrix
     """
     rows, cols = len(matrix), len(matrix[0])
 

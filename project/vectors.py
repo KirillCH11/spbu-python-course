@@ -4,20 +4,20 @@ from typing import List
 
 def dot_product(vec1: List[float], vec2: List[float]) -> float:
     """
-    Вычисляет скалярное произведение двух векторов.
+    Calculates the dot product of two vectors.
 
     Args:
-        vec1: Первый вектор (список чисел)
-        vec2: Второй вектор (список чисел)
+        vec1: First vector (list of numbers)
+        vec2: Second vector (list of numbers)
 
     Returns:
-        Скалярное произведение
+        Dot product of vectors
 
     Raises:
-        ValueError: Если векторы разной длины
+        ValueError: If vectors have different lengths
     """
     if len(vec1) != len(vec2):
-        raise ValueError("Некорректный ввод: векторы должны быть одинаковой длины!")
+        raise ValueError("Invalid input: vectors must have the same length!")
     else:
         result = 0.0
         for i in range(len(vec1)):
@@ -27,11 +27,13 @@ def dot_product(vec1: List[float], vec2: List[float]) -> float:
 
 def vector_length(vec: List[float]) -> float:
     """
-    Вычисляет длину вектора.
+    Calculates the length of a vector.
+
     Args:
-        vec: Вектор (список чисел)
+        vec: Vector (list of numbers)
+
     Returns:
-        Длина вектора
+        Length of the vector
     """
     sm_sq = 0.0
     for num in vec:
@@ -41,17 +43,20 @@ def vector_length(vec: List[float]) -> float:
 
 def vector_angle(vec1: List[float], vec2: List[float]) -> float:
     """
-    Вычисляет угол между двумя векторами в радианах.
+    Calculates the angle between two vectors in radians.
+
     Args:
-        vec1: Первый вектор (список чисел)
-        vec2: Второй вектор (список чисел)
+        vec1: First vector (list of numbers)
+        vec2: Second vector (list of numbers)
+
     Returns:
-        Угол между векторами в радианах
+        Angle between vectors in radians
+
     Raises:
-        ValueError: Если векторы разной длины или нулевые
+        ValueError: If vectors have different lengths or are zero vectors
     """
     if len(vec1) != len(vec2):
-        raise ValueError("Некорректный ввод: векторы должны быть одинаковой длины!")
+        raise ValueError("Invalid input: vectors must have the same length!")
 
     else:
         dot = dot_product(vec1, vec2)
@@ -59,6 +64,6 @@ def vector_angle(vec1: List[float], vec2: List[float]) -> float:
         len2 = vector_length(vec2)
 
         if len1 == 0 or len2 == 0:
-            raise ValueError("Некорректный ввод: векторы должны быть ненулевыми!")
+            raise ValueError("Invalid input: vectors must be non-zero!")
 
         return acos(dot / (len1 * len2))
