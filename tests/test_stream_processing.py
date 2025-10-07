@@ -1,0 +1,71 @@
+import pytest
+from project.stream_processing import *
+
+
+@pytest.fixture
+def numbers():
+    """Test numbers"""
+    return [1, 2, 3, 4, 5]
+
+
+def test_generate_data():
+    """Test data stream creation"""
+    data = [1, 2, 3]
+    stream = generate_data(data)
+    result = to_list(stream)
+    assert result == [1, 2, 3]
+
+
+def test_map_operation():
+    """Test map operation"""
+    stream = generate_data([1, 2, 3])
+    double_op = map_stream(lambda x: x * 2)
+    result = to_list(double_op(stream))
+    assert result == [2, 4, 6]
+
+
+def test_filter_operation():
+    """Test filter operation"""
+    stream = generate_data([1, 2, 3, 4, 5])
+    even_op = filter_stream(lambda x: x % 2 == 0)
+    result = to_list(even_op(stream))
+    assert result == [2, 4]
+
+
+def test_take_operation():
+    """Test take operation"""
+    stream = generate_data([1, 2, 3, 4, 5])
+    take_op = take_items(3)
+    result = to_list(take_op(stream))
+    assert result == [1, 2, 3]
+
+
+def test_reduce_operation():
+    """Test reduce operation"""
+    stream = generate_data([1, 2, 3, 4])
+    sum_op = reduce_stream(lambda x, y: x + y)
+    result = to_list(sum_op(stream))
+    assert result == [10]  # 1+2+3+4
+
+
+def test_basic_pipeline():
+    """Test basic pipeline"""
+    stream = generate_data([1, 2, 3, 4, 5, 6])
+
+    result_stream = process_pipeline(
+        stream,
+        filter_stream(lambda x: x > 2),  # [3, 4, 5, 6]
+        map_stream(lambda x: x * 3),  # [9, 12, 15, 18]
+        take_items(2),  # [9, 12]
+    )
+
+    result = to_list(result_stream)
+    assert result == [9, 12]
+
+
+def test_empty_pipeline():
+    """Test pipeline without operations"""
+    stream = generate_data([1, 2, 3])
+    result_stream = process_pipeline(stream)
+    result = to_list(result_stream)
+    assert result == [1, 2, 3]
