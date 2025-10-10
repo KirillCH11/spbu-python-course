@@ -4,7 +4,6 @@ from project.stream_processing import *
 
 @pytest.fixture
 def numbers():
-    """Test numbers"""
     return [1, 2, 3, 4, 5]
 
 
@@ -17,7 +16,6 @@ def test_generate_data():
 
 
 def test_map_operation():
-    """Test map operation"""
     stream = generate_data([1, 2, 3])
     double_op = map_stream(lambda x: x * 2)
     result = to_list(double_op(stream))
@@ -25,7 +23,6 @@ def test_map_operation():
 
 
 def test_filter_operation():
-    """Test filter operation"""
     stream = generate_data([1, 2, 3, 4, 5])
     even_op = filter_stream(lambda x: x % 2 == 0)
     result = to_list(even_op(stream))
@@ -33,7 +30,6 @@ def test_filter_operation():
 
 
 def test_take_operation():
-    """Test take operation"""
     stream = generate_data([1, 2, 3, 4, 5])
     take_op = take_items(3)
     result = to_list(take_op(stream))
@@ -41,7 +37,6 @@ def test_take_operation():
 
 
 def test_reduce_operation():
-    """Test reduce operation"""
     stream = generate_data([1, 2, 3, 4])
     sum_op = reduce_stream(lambda x, y: x + y)
     result = to_list(sum_op(stream))
@@ -49,7 +44,6 @@ def test_reduce_operation():
 
 
 def test_basic_pipeline():
-    """Test basic pipeline"""
     stream = generate_data([1, 2, 3, 4, 5, 6])
 
     result_stream = process_pipeline(
@@ -64,8 +58,53 @@ def test_basic_pipeline():
 
 
 def test_empty_pipeline():
-    """Test pipeline without operations"""
     stream = generate_data([1, 2, 3])
     result_stream = process_pipeline(stream)
+    result = to_list(result_stream)
+    assert result == [1, 2, 3]
+
+
+def test_different_collections():
+    stream = generate_data([1, 2, 2, 3, 4])
+
+    as_list = to_list(stream)
+    assert as_list == [1, 2, 2, 3, 4]
+
+    stream = generate_data([1, 2, 2, 3, 4])
+    as_tuple = to_tuple(stream)
+    assert as_tuple == (1, 2, 2, 3, 4)
+
+    stream = generate_data([1, 2, 2, 3, 4])
+    as_set = to_set(stream)
+    assert as_set == {1, 2, 3, 4}
+
+
+def test_lazy_evaluation_simple():
+    processed = []
+
+    def track(x):
+        processed.append(x)
+        return x
+
+    stream = generate_data([1, 2, 3, 4, 5])
+    tracked_stream = map_stream(track)(stream)
+    taken_stream = take_items(2)(tracked_stream)
+
+    result = to_list(taken_stream)
+
+    assert processed == [1, 2]
+    assert result == [1, 2]
+
+
+def test_lazy_evaluation_infinite():
+    def infinite_counter():
+        i = 1
+        while True:
+            yield i
+            i += 1
+
+    stream = infinite_counter()
+    result_stream = process_pipeline(stream, take_items(3))
+
     result = to_list(result_stream)
     assert result == [1, 2, 3]
