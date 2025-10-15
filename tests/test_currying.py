@@ -54,7 +54,7 @@ def test_error_cases():
 
     curried = curry_explicit(simple_func, 2)
     with pytest.raises(ValueError):
-        curried(1)(2)(3)
+        curried(1, 2, 3)
 
     uncurried = uncurry_explicit(lambda x: lambda y: x + y, 2)
     with pytest.raises(ValueError):
