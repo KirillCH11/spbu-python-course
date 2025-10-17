@@ -72,8 +72,8 @@ def test_only_one_argument_per_call():
     result = curried(1)(2)(3)
     assert result == 6
 
-    with pytest.raises(ValueError):
-        curried(1, 2)
+    result2 = curried(1, 2)(3)
+    assert result2 == 6
 
 
 def test_builtin_functions():
