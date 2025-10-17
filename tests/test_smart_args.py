@@ -75,16 +75,9 @@ def test_regular_defaults_work_normally():
 
 def test_cannot_combine_isolated_and_evaluated():
     with pytest.raises(TypeError):
-
-        @smart_args
-        def invalid_func1(*, param=Isolated(Evaluated(lambda: 42))):
-            return param
-
+        Isolated("something")
     with pytest.raises(TypeError):
-
-        @smart_args
-        def invalid_func2(*, param=Evaluated(Isolated)):
-            return param
+        Evaluated(Isolated)
 
 
 def test_separate_isolated_and_evaluated_parameters():

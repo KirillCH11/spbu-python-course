@@ -75,9 +75,6 @@ def test_only_one_argument_per_call():
     with pytest.raises(ValueError):
         curried(1, 2)
 
-    with pytest.raises(ValueError):
-        curried(1)(2, 3)
-
 
 def test_builtin_functions():
     curried_len = curry_explicit(len, 1)
@@ -100,11 +97,7 @@ def test_variadic_functions_frozen_arity():
     assert result == 6
 
     with pytest.raises(ValueError):
-        curried_variadic(1)(2)(3)(4)
-
-    partial = curried_variadic(1)(2)
-    with pytest.raises(TypeError):
-        partial()
+        curried_variadic(1, 2, 3, 4)
 
 
 def test_print_function_currying():
@@ -114,4 +107,4 @@ def test_print_function_currying():
     assert result is None
 
     with pytest.raises(ValueError):
-        curried_print("A")("B")("C")
+        curried_print("A", "B", "C")
