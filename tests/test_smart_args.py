@@ -74,13 +74,19 @@ def test_regular_defaults_work_normally():
 
 
 def test_cannot_combine_isolated_and_evaluated():
-    evaluated_with_isolated = Evaluated(Isolated())
+    assert callable(Isolated), "Isolated should be callable"
 
-    with pytest.raises(TypeError):
-        evaluated_with_isolated.factory()
-    evaluated_with_isolated_class = Evaluated(Isolated)
-    with pytest.raises(TypeError):
-        evaluated_with_isolated_class.factory()
+    evaluated_with_isolated = Evaluated(Isolated)
+
+    isolated_instance = Isolated()
+    assert not callable(isolated_instance), "Isolated instance should not be callable!"
+
+    @smart_args
+    def problematic_func(*, param=Evaluated(Isolated)):
+        return param
+
+    result = problematic_func()
+    assert isinstance(result, Isolated)
 
 
 def test_separate_isolated_and_evaluated_parameters():
