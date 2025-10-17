@@ -61,3 +61,57 @@ def test_error_cases():
         uncurried(1, 2, 3)
     with pytest.raises(ValueError):
         uncurried(1)
+
+
+def test_only_one_argument_per_call():
+    def add_three(a, b, c):
+        return a + b + c
+
+    curried = curry_explicit(add_three, 3)
+
+    result = curried(1)(2)(3)
+    assert result == 6
+
+    with pytest.raises(ValueError):
+        curried(1, 2)
+
+    with pytest.raises(ValueError):
+        curried(1)(2, 3)
+
+
+def test_builtin_functions():
+    curried_len = curry_explicit(len, 1)
+    assert curried_len("hello") == 5
+
+    curried_max = curry_explicit(max, 2)
+    assert curried_max(10)(20) == 20
+
+    curried_min = curry_explicit(min, 3)
+    assert curried_min(30)(20)(10) == 10
+
+
+def test_variadic_functions_frozen_arity():
+    def variadic_func(*args):
+        return sum(args)
+
+    curried_variadic = curry_explicit(variadic_func, 3)
+
+    result = curried_variadic(1)(2)(3)
+    assert result == 6
+
+    with pytest.raises(ValueError):
+        curried_variadic(1)(2)(3)(4)
+
+    partial = curried_variadic(1)(2)
+    with pytest.raises(TypeError):
+        partial()
+
+
+def test_print_function_currying():
+    curried_print = curry_explicit(print, 2)
+
+    result = curried_print("Hello")("World")
+    assert result is None
+
+    with pytest.raises(ValueError):
+        curried_print("A")("B")("C")
