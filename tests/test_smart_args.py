@@ -74,14 +74,13 @@ def test_regular_defaults_work_normally():
 
 
 def test_cannot_combine_isolated_and_evaluated():
-
-    isolated_instance = Isolated()
-
-    with pytest.raises(TypeError):
-        Evaluated(Isolated())
+    evaluated_with_isolated = Evaluated(Isolated())
 
     with pytest.raises(TypeError):
-        Evaluated(Isolated)
+        evaluated_with_isolated.factory()
+    evaluated_with_isolated_class = Evaluated(Isolated)
+    with pytest.raises(TypeError):
+        evaluated_with_isolated_class.factory()
 
 
 def test_separate_isolated_and_evaluated_parameters():
