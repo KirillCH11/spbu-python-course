@@ -13,21 +13,26 @@ def curry_explicit(function: Callable, arity: int) -> Callable:
         ValueError: If arity is negative
     """
     if arity < 0:
-        raise ValueError("Arity cannot be negative!")
+        raise ValueError("Arity cannot be negative")
 
-    def curried(*args):
-        if len(args) > arity:
-            raise ValueError(f"Many arguments: expected {arity}, got {len(args)}!")
+    if arity == 0:
 
-        if len(args) == arity:
-            return function(*args)
+        def zero_arity():
+            return function()
 
-        def next_curried(next_arg):
-            return curried(*(args + (next_arg,)))
+        return zero_arity
+
+    def curried_function(accumulated_args: tuple = ()) -> Callable:
+        if len(accumulated_args) == arity:
+            return function(*accumulated_args)
+
+        def next_curried(next_arg: Any) -> Any:
+            new_args = accumulated_args + (next_arg,)
+            return curried_function(new_args)
 
         return next_curried
 
-    return curried
+    return curried_function()
 
 
 def uncurry_explicit(function: Callable, arity: int) -> Callable:
@@ -42,16 +47,17 @@ def uncurry_explicit(function: Callable, arity: int) -> Callable:
         ValueError: If arity is negative
     """
     if arity < 0:
-        raise ValueError("Arity cannot be negative!")
+        raise ValueError("Arity cannot be negative")
 
-    def uncurried(*args):
+    def uncurried(*args: Any) -> Any:
         if len(args) != arity:
-            raise ValueError(f"Many arguments: expected {arity}, got {len(args)}")
+            raise ValueError(
+                f"Wrong number of arguments: expected {arity}, got {len(args)}"
+            )
 
-        result = function
+        current_func = function
         for arg in args:
-            result = result(arg)
-
-        return result
+            current_func = current_func(arg)
+        return current_func
 
     return uncurried
