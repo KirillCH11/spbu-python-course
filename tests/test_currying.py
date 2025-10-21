@@ -151,11 +151,27 @@ def test_curry_freezes_variadic_function_arity():
         curried_sum(1, 2)  # Too few in first call
 
 
-def test_curry_with_print_function():
-    """Test currying with Python's print function"""
-    # Create curried print that expects exactly 2 arguments
-    curried_print = curry_explicit(print, 2)
+def test_curry_with_variadic_builtin_functions_comprehensive():
+    """Test currying with various built-in variadic functions"""
 
-    # Returns None after receiving 2 arguments (print's return value)
+    # Test with multiple built-in variadic functions
+    curried_max = curry_explicit(max, 3)
+    assert curried_max(1)(5)(3) == 5
+
+    curried_min = curry_explicit(min, 4)
+    assert curried_min(10)(5)(8)(2) == 2
+
+    # Test with print function
+    curried_print = curry_explicit(print, 2)
     result = curried_print("Hello")("World")
     assert result is None
+
+    # Verify arity freezing for all functions
+    with pytest.raises(ValueError):
+        curried_max(1, 2)  # Multiple args in first call
+
+    with pytest.raises(ValueError):
+        curried_min(10)(5, 8)  # Multiple args in later call
+
+    with pytest.raises(ValueError):
+        curried_print("A", "B")  # Multiple args for print

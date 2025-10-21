@@ -176,3 +176,49 @@ def test_regular_default_values_still_work():
     # Can override defaults
     assert normal_function(a=2) == 12
     assert normal_function(a=1, b=1) == 2
+
+
+def test_cannot_combine_isolated_and_evaluated_explicitly():
+    """Test explicit prohibition of Isolated(Evaluated()) and Evaluated(Isolated) combinations"""
+
+    with pytest.raises(TypeError):
+        Isolated(Evaluated(lambda: 42))
+
+    with pytest.raises(TypeError):
+        Evaluated(Isolated())
+
+    with pytest.raises(TypeError):
+        Evaluated(Isolated)
+
+
+def test_isolated_and_evaluated_work_independently():
+
+    call_count = 0
+
+    def counter():
+        nonlocal call_count
+        call_count += 1
+        return call_count
+
+    @smart_args
+    def independent_usage(
+        *,
+        isolated_data=Isolated,
+        evaluated_value=Evaluated(counter),
+        normal_param="default",
+    ):
+        return isolated_data, evaluated_value, normal_param
+
+    original = {"key": "value"}
+
+    result1 = independent_usage(isolated_data=original)
+    assert result1[0] is not original
+    assert result1[1] == 1
+    assert result1[2] == "default"
+
+    result2 = independent_usage(isolated_data=original, normal_param="custom")
+    assert result2[0] is not original
+    assert result2[1] == 2
+    assert result2[2] == "custom"
+
+    assert original == {"key": "value"}
