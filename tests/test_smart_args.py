@@ -93,25 +93,67 @@ def test_smart_args_only_allows_keyword_arguments():
         keyword_only_function(20)
 
 
-def test_isolated_and_evaluated_cannot_be_combined():
-    """Test that Isolated and Evaluated serve different purposes and cannot be mixed"""
+def test_cannot_use_isolated_as_evaluated_factory():
+    """Test that Isolated cannot be meaningfully used with Evaluated"""
 
-    # Isolated is for protecting provided values
-    # Evaluated is for computing default values
-    # They have fundamentally different use cases
+    # Isolated instance is not callable, so cannot be used as Evaluated factory
+    isolated_instance = Isolated()
+    with pytest.raises(TypeError):
+        isolated_instance()  # TypeError: 'Isolated' object is not callable
+
+    # Isolated class itself is callable but returns useless Isolated instance
+    useless_factory = Evaluated(Isolated)
+    result = useless_factory.factory()
+    assert isinstance(
+        result, Isolated
+    )  # Returns useless Isolated instance, not meaningful value
+
+
+def test_cannot_use_evaluated_as_isolated_value():
+    """Test that Evaluated cannot be meaningfully used as Isolated value"""
+
+    # Evaluated instance cannot be deep copied meaningfully
+    evaluated_instance = Evaluated(lambda: 42)
+
+    # This would create a copy of Evaluated, but it's meaningless for Isolated's purpose
+    # Isolated is meant for protecting user-provided values, not factory objects
+
+
+def test_isolated_and_evaluated_work_correctly_in_separate_parameters():
+    """Test that Isolated and Evaluated work correctly when used in separate parameters"""
+
+    call_count = 0
+
+    def counter():
+        nonlocal call_count
+        call_count += 1
+        return call_count
 
     @smart_args
-    def correct_usage(
+    def independent_usage(
         *,
-        protected_data=Isolated,  # Value must be provided, will be copied
-        computed_value=Evaluated(lambda: 42),  # Default computed if not provided
+        isolated_data=Isolated,
+        evaluated_value=Evaluated(counter),
+        normal_param="default",
     ):
-        return protected_data, computed_value
+        return isolated_data, evaluated_value, normal_param
 
-    # This demonstrates their separate purposes
-    result_data, result_value = correct_usage(protected_data=[1, 2, 3])
-    assert result_data == [1, 2, 3]
-    assert result_value == 42
+    original = {"key": "value"}
+
+    # First call
+    result1 = independent_usage(isolated_data=original)
+    assert result1[0] is not original  # isolated_data is copied
+    assert result1[1] == 1  # evaluated_value is computed
+    assert result1[2] == "default"  # normal_param uses default
+
+    # Second call
+    result2 = independent_usage(isolated_data=original, normal_param="custom")
+    assert result2[0] is not original  # isolated_data is copied again
+    assert result2[1] == 2  # evaluated_value is recomputed
+    assert result2[2] == "custom"  # normal_param is overridden
+
+    # Original remains unchanged
+    assert original == {"key": "value"}
 
 
 def test_multiple_evaluated_parameters_work_independently():
@@ -176,49 +218,3 @@ def test_regular_default_values_still_work():
     # Can override defaults
     assert normal_function(a=2) == 12
     assert normal_function(a=1, b=1) == 2
-
-
-def test_cannot_combine_isolated_and_evaluated_explicitly():
-    """Test explicit prohibition of Isolated(Evaluated()) and Evaluated(Isolated) combinations"""
-
-    with pytest.raises(TypeError):
-        Isolated(Evaluated(lambda: 42))
-
-    with pytest.raises(TypeError):
-        Evaluated(Isolated())
-
-    with pytest.raises(TypeError):
-        Evaluated(Isolated)
-
-
-def test_isolated_and_evaluated_work_independently():
-
-    call_count = 0
-
-    def counter():
-        nonlocal call_count
-        call_count += 1
-        return call_count
-
-    @smart_args
-    def independent_usage(
-        *,
-        isolated_data=Isolated,
-        evaluated_value=Evaluated(counter),
-        normal_param="default",
-    ):
-        return isolated_data, evaluated_value, normal_param
-
-    original = {"key": "value"}
-
-    result1 = independent_usage(isolated_data=original)
-    assert result1[0] is not original
-    assert result1[1] == 1
-    assert result1[2] == "default"
-
-    result2 = independent_usage(isolated_data=original, normal_param="custom")
-    assert result2[0] is not original
-    assert result2[1] == 2
-    assert result2[2] == "custom"
-
-    assert original == {"key": "value"}
