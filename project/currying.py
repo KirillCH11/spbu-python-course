@@ -15,24 +15,35 @@ def curry_explicit(function: Callable, arity: int) -> Callable:
     if arity < 0:
         raise ValueError("Arity cannot be negative")
 
-    if arity == 0:
+    def curried(*args):
+        if len(args) > 1:
+            raise ValueError(f"Too many arguments: expected at most 1, got {len(args)}")
 
-        def zero_arity():
+        if len(args) == 0 and arity > 0:
+            return curried
+
+        if len(args) == 1:
+            arg = args[0]
+
+            if not hasattr(curried, "accumulated_args"):
+                curried.accumulated_args = []
+
+            curried.accumulated_args.append(arg)
+
+            if len(curried.accumulated_args) == arity:
+                result = function(*curried.accumulated_args)
+                curried.accumulated_args = []
+                return result
+            else:
+                return curried
+
+        if arity == 0:
             return function()
 
-        return zero_arity
+        return curried
 
-    def curried_function(accumulated_args: tuple = ()) -> Callable:
-        if len(accumulated_args) == arity:
-            return function(*accumulated_args)
-
-        def next_curried(next_arg: Any) -> Any:
-            new_args = accumulated_args + (next_arg,)
-            return curried_function(new_args)
-
-        return next_curried
-
-    return curried_function()
+    curried.accumulated_args = []
+    return curried
 
 
 def uncurry_explicit(function: Callable, arity: int) -> Callable:
@@ -49,15 +60,15 @@ def uncurry_explicit(function: Callable, arity: int) -> Callable:
     if arity < 0:
         raise ValueError("Arity cannot be negative")
 
-    def uncurried(*args: Any) -> Any:
+    def uncurried(*args):
         if len(args) != arity:
             raise ValueError(
                 f"Wrong number of arguments: expected {arity}, got {len(args)}"
             )
 
-        current_func = function
+        result = function
         for arg in args:
-            current_func = current_func(arg)
-        return current_func
+            result = result(arg)
+        return result
 
     return uncurried

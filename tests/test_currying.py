@@ -88,11 +88,9 @@ def test_curried_function_accepts_only_one_argument_per_call():
 
     curried = curry_explicit(func, 3)
 
-    # This should work
     result = curried(1)(2)(3)
     assert result == 6
 
-    # These should FAIL according to requirements:
     with pytest.raises(ValueError):
         curried(1, 2)  # Multiple args in first call
 
@@ -147,6 +145,10 @@ def test_curry_freezes_variadic_function_arity():
     # Works with exactly 3 arguments
     result = curried_sum(1)(2)(3)
     assert result == 6
+
+    # Cannot use with different number of arguments
+    with pytest.raises(ValueError):
+        curried_sum(1, 2)  # Too few in first call
 
 
 def test_curry_with_print_function():
