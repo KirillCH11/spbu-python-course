@@ -1,4 +1,4 @@
-from typing import Callable, Any
+from typing import Callable, Any, List, Union
 
 
 def curry_explicit(function: Callable, arity: int) -> Callable:
@@ -15,7 +15,11 @@ def curry_explicit(function: Callable, arity: int) -> Callable:
     if arity < 0:
         raise ValueError("Arity cannot be negative")
 
-    def curried(*args):
+    accumulated_args: List[Any] = []
+
+    def curried(*args: Any) -> Union[Any, Callable]:
+        nonlocal accumulated_args
+
         if len(args) > 1:
             raise ValueError(f"Too many arguments: expected at most 1, got {len(args)}")
 
@@ -24,15 +28,11 @@ def curry_explicit(function: Callable, arity: int) -> Callable:
 
         if len(args) == 1:
             arg = args[0]
+            accumulated_args.append(arg)
 
-            if not hasattr(curried, "accumulated_args"):
-                curried.accumulated_args = []
-
-            curried.accumulated_args.append(arg)
-
-            if len(curried.accumulated_args) == arity:
-                result = function(*curried.accumulated_args)
-                curried.accumulated_args = []
+            if len(accumulated_args) == arity:
+                result = function(*accumulated_args)
+                accumulated_args.clear()
                 return result
             else:
                 return curried
@@ -42,7 +42,6 @@ def curry_explicit(function: Callable, arity: int) -> Callable:
 
         return curried
 
-    curried.accumulated_args = []
     return curried
 
 
@@ -60,7 +59,7 @@ def uncurry_explicit(function: Callable, arity: int) -> Callable:
     if arity < 0:
         raise ValueError("Arity cannot be negative")
 
-    def uncurried(*args):
+    def uncurried(*args: Any) -> Any:
         if len(args) != arity:
             raise ValueError(
                 f"Wrong number of arguments: expected {arity}, got {len(args)}"
