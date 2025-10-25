@@ -1,5 +1,6 @@
 import random
 from abc import ABC, abstractmethod
+from typing import Optional
 from .scorecard import ScoreCard
 from .scoring import Category, calculate_score
 
@@ -19,7 +20,7 @@ class Player(ABC):
     @abstractmethod
     def choose_category(
         self, dice_values: list, available_categories: list
-    ) -> Category:
+    ) -> Optional[Category]:
         """Choose category to score in."""
         pass
 
@@ -40,7 +41,7 @@ class ConservativeBot(Player):
 
     def choose_category(
         self, dice_values: list, available_categories: list
-    ) -> Category:
+    ) -> Optional[Category]:
         best_score = -1
         best_category = None
 
@@ -69,7 +70,7 @@ class RiskyBot(Player):
 
     def choose_category(
         self, dice_values: list, available_categories: list
-    ) -> Category:
+    ) -> Optional[Category]:
         high_value_categories = [
             Category.YATZY,
             Category.LARGE_STRAIGHT,
@@ -115,7 +116,7 @@ class AdaptiveBot(Player):
 
     def choose_category(
         self, dice_values: list, available_categories: list
-    ) -> Category:
+    ) -> Optional[Category]:
         upper_categories = [
             Category.ONES,
             Category.TWOS,
