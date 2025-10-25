@@ -1,0 +1,230 @@
+from typing import Any, List, Optional, Iterator, Tuple
+
+
+class HashTable:
+    """A simple hash table implementation using separate chaining with doubly linked lists"""
+
+    def __init__(self, size: int = 10) -> None:
+        self.size: int = size
+        self.table: List[Optional["_LinkedList"]] = [None] * size
+        self._length: int = 0
+
+    def _hash(self, key: Any) -> int:
+        """Compute the hash value for a key"""
+        return hash(key) % self.size
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        """Set the value for a key using table[key] = value syntax"""
+        index: int = self._hash(key)
+
+        if self.table[index] is None:
+            self.table[index] = _LinkedList()
+
+        linked_list = self.table[index]
+        if linked_list is not None and linked_list.insert(key, value):
+            self._length += 1
+
+    def __getitem__(self, key: Any) -> Any:
+        """Get the value for a key using table[key] syntax"""
+        index: int = self._hash(key)
+
+        linked_list = self.table[index]
+        if linked_list is None:
+            raise KeyError(f"Key '{key}' not found")
+
+        value: Optional[Any] = linked_list.find(key)
+        if value is None:
+            raise KeyError(f"Key '{key}' not found")
+
+        return value
+
+    def __delitem__(self, key: Any) -> None:
+        """Delete a key-value pair using del table[key] syntax"""
+        index: int = self._hash(key)
+
+        linked_list = self.table[index]
+        if linked_list is None:
+            raise KeyError(f"Key '{key}' not found")
+
+        if linked_list.remove(key):
+            self._length -= 1
+        else:
+            raise KeyError(f"Key '{key}' not found")
+
+    def __contains__(self, key: Any) -> bool:
+        """Check if a key exists in the hash table using 'key in table' syntax"""
+        try:
+            _ = self[key]
+            return True
+        except KeyError:
+            return False
+
+    def __len__(self) -> int:
+        """Return the number of key-value pairs in the hash table"""
+        return self._length
+
+    def __iter__(self) -> Iterator[Any]:
+        """Return a forward iterator for keys"""
+        return self._ForwardIterator(self)
+
+    def keys(self) -> List[Any]:
+        """Return a list of all keys in the hash table"""
+        return [key for key in self]
+
+    def values(self) -> List[Any]:
+        """Return a list of all values in the hash table"""
+        return [self[key] for key in self]
+
+    def items(self) -> List[Tuple[Any, Any]]:
+        """Return a list of all key-value pairs in the hash table"""
+        return [(key, self[key]) for key in self]
+
+    def reverse_iter(self) -> "_ReverseIterator":
+        """Return a reverse iterator for keys"""
+        return self._ReverseIterator(self)
+
+    class _ForwardIterator:
+        """Forward iterator for traversing the hash table"""
+
+        def __init__(self, hash_table: "HashTable") -> None:
+            self.hash_table: "HashTable" = hash_table
+            self.bucket_index: int = 0
+            self.current_node: Optional["_Node"] = None
+            self._find_first_element()
+
+        def _find_first_element(self) -> None:
+            """Find the first non-empty element in the hash table"""
+            while self.bucket_index < self.hash_table.size:
+                linked_list = self.hash_table.table[self.bucket_index]
+                if linked_list is not None and linked_list.head is not None:
+                    self.current_node = linked_list.head
+                    return
+                self.bucket_index += 1
+
+            self.current_node = None
+
+        def __iter__(self) -> Iterator[Any]:
+            return self
+
+        def __next__(self) -> Any:
+            if self.current_node is None:
+                raise StopIteration
+
+            key: Any = self.current_node.key
+            self.current_node = self.current_node.next
+
+            if self.current_node is None:
+                self.bucket_index += 1
+                self._find_first_element()
+
+            return key
+
+    class _ReverseIterator:
+        """Reverse iterator for traversing the hash table from the end"""
+
+        def __init__(self, hash_table: "HashTable") -> None:
+            self.hash_table: "HashTable" = hash_table
+            self.bucket_index: int = hash_table.size - 1
+            self.current_node: Optional["_Node"] = None
+            self._find_last_element()
+
+        def _find_last_element(self) -> None:
+            """Find the last non-empty element in the hash table"""
+            while self.bucket_index >= 0:
+                linked_list = self.hash_table.table[self.bucket_index]
+                if linked_list is not None and linked_list.tail is not None:
+                    self.current_node = linked_list.tail
+                    return
+                self.bucket_index -= 1
+
+            self.current_node = None
+
+        def __iter__(self) -> Iterator[Any]:
+            return self
+
+        def __next__(self) -> Any:
+            if self.current_node is None:
+                raise StopIteration
+
+            key: Any = self.current_node.key
+            self.current_node = self.current_node.prev
+
+            if self.current_node is None:
+                self.bucket_index -= 1
+                self._find_last_element()
+
+            return key
+
+
+class _Node:
+    """A node in the doubly linked list"""
+
+    def __init__(self, key: Any, value: Any) -> None:
+        self.key: Any = key
+        self.value: Any = value
+        self.next: Optional["_Node"] = None
+        self.prev: Optional["_Node"] = None
+
+
+class _LinkedList:
+    """Doubly linked list for collision resolution"""
+
+    def __init__(self) -> None:
+        self.head: Optional["_Node"] = None
+        self.tail: Optional["_Node"] = None
+
+    def insert(self, key: Any, value: Any) -> bool:
+        """Insert or update a key-value pair in the list"""
+        current: Optional["_Node"] = self.head
+
+        while current is not None:
+            if current.key == key:
+                current.value = value
+                return False
+            current = current.next
+
+        new_node: "_Node" = _Node(key, value)
+
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+        else:
+            new_node.prev = self.tail
+            if self.tail is not None:
+                self.tail.next = new_node
+            self.tail = new_node
+
+        return True
+
+    def find(self, key: Any) -> Optional[Any]:
+        """Find a value by key in the list"""
+        current: Optional["_Node"] = self.head
+
+        while current is not None:
+            if current.key == key:
+                return current.value
+            current = current.next
+
+        return None
+
+    def remove(self, key: Any) -> bool:
+        """Remove a key-value pair from the list"""
+        current: Optional["_Node"] = self.head
+
+        while current is not None:
+            if current.key == key:
+                if current.prev is not None:
+                    current.prev.next = current.next
+                else:
+                    self.head = current.next
+
+                if current.next is not None:
+                    current.next.prev = current.prev
+                else:
+                    self.tail = current.prev
+
+                return True
+
+            current = current.next
+
+        return False
