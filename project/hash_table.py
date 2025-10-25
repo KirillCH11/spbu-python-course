@@ -20,17 +20,19 @@ class HashTable:
         if self.table[index] is None:
             self.table[index] = _LinkedList()
 
-        if self.table[index].insert(key, value):
+        linked_list = self.table[index]
+        if linked_list is not None and linked_list.insert(key, value):
             self._length += 1
 
     def __getitem__(self, key: Any) -> Any:
         """Get the value for a key using table[key] syntax"""
         index: int = self._hash(key)
 
-        if self.table[index] is None:
+        linked_list = self.table[index]
+        if linked_list is None:
             raise KeyError(f"Key '{key}' not found")
 
-        value: Optional[Any] = self.table[index].find(key)
+        value: Optional[Any] = linked_list.find(key)
         if value is None:
             raise KeyError(f"Key '{key}' not found")
 
@@ -40,10 +42,11 @@ class HashTable:
         """Delete a key-value pair using del table[key] syntax"""
         index: int = self._hash(key)
 
-        if self.table[index] is None:
+        linked_list = self.table[index]
+        if linked_list is None:
             raise KeyError(f"Key '{key}' not found")
 
-        if self.table[index].remove(key):
+        if linked_list.remove(key):
             self._length -= 1
         else:
             raise KeyError(f"Key '{key}' not found")
@@ -91,14 +94,14 @@ class HashTable:
 
         def _find_first_element(self) -> None:
             """Find the first non-empty element in the hash table"""
-            while self.bucket_index < self.hash_table.size and (
-                self.hash_table.table[self.bucket_index] is None
-                or self.hash_table.table[self.bucket_index].head is None
-            ):
+            while self.bucket_index < self.hash_table.size:
+                linked_list = self.hash_table.table[self.bucket_index]
+                if linked_list is not None and linked_list.head is not None:
+                    self.current_node = linked_list.head
+                    return
                 self.bucket_index += 1
 
-            if self.bucket_index < self.hash_table.size:
-                self.current_node = self.hash_table.table[self.bucket_index].head
+            self.current_node = None
 
         def __iter__(self) -> Iterator[Any]:
             return self
@@ -127,14 +130,14 @@ class HashTable:
 
         def _find_last_element(self) -> None:
             """Find the last non-empty element in the hash table"""
-            while self.bucket_index >= 0 and (
-                self.hash_table.table[self.bucket_index] is None
-                or self.hash_table.table[self.bucket_index].tail is None
-            ):
+            while self.bucket_index >= 0:
+                linked_list = self.hash_table.table[self.bucket_index]
+                if linked_list is not None and linked_list.tail is not None:
+                    self.current_node = linked_list.tail
+                    return
                 self.bucket_index -= 1
 
-            if self.bucket_index >= 0:
-                self.current_node = self.hash_table.table[self.bucket_index].tail
+            self.current_node = None
 
         def __iter__(self) -> Iterator[Any]:
             return self
