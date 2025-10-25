@@ -1,5 +1,6 @@
 import pytest
 from project.Yatzy.player import ConservativeBot, RiskyBot, AdaptiveBot
+from project.Yatzy.scoring import Category
 
 
 class TestPlayers:
@@ -23,7 +24,12 @@ class TestPlayers:
     def test_choose_category(self):
         bot = ConservativeBot("TestBot")
         dice = [1, 1, 1, 2, 2]
-        available = ["ones", "twos", "three_kind", "full_house"]
+        available = [
+            Category.ONES,
+            Category.TWOS,
+            Category.THREE_KIND,
+            Category.FULL_HOUSE,
+        ]
 
         chosen = bot.choose_category(dice, available)
         assert chosen in available
@@ -32,5 +38,5 @@ class TestPlayers:
         bot = ConservativeBot("TestBot")
         assert bot.scorecard.get_total_score() == 0
 
-        bot.scorecard.record_score("ones", 3)
+        bot.scorecard.record_score(Category.ONES, 3)
         assert bot.scorecard.get_total_score() == 3

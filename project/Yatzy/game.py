@@ -1,17 +1,18 @@
 from .dice import Dice
+from .scoring import calculate_score
 
 
 class Game:
-    """Manages the Yatzy game flow"""
+    """Manages the Yatzy game flow."""
 
-    def __init__(self, players, max_rounds=15):
+    def __init__(self, players: list, max_rounds: int = 15):
         self.players = players
         self.max_rounds = max_rounds
         self.current_round = 0
         self.dice = Dice()
 
-    def play_round(self):
-        """Play one round for all players"""
+    def play_round(self) -> None:
+        """Play one round for all players."""
         self.current_round += 1
         print(f"\n--- Round {self.current_round} ---")
 
@@ -21,12 +22,11 @@ class Game:
 
             print(f"Score: {player.scorecard.get_total_score()}")
 
-    def play_turn(self, player):
-        """Play one turn for a player"""
+    def play_turn(self, player) -> None:
+        """Play one turn for a player."""
         self.dice.reset_roll_count()
-        self.dice.roll()  # First roll
+        self.dice.roll()
 
-        # Up to 2 re-rolls
         while self.dice.roll_count < 3:
             print(f"Dice: {self.dice.get_values()} (Roll {self.dice.roll_count})")
 
@@ -48,15 +48,13 @@ class Game:
         available_categories = player.scorecard.get_available_categories()
         chosen_category = player.choose_category(final_dice, available_categories)
 
-        from .scoring import calculate_score
-
         score = calculate_score(final_dice, chosen_category)
 
         player.scorecard.record_score(chosen_category, score)
-        print(f"Scored {score} points in {chosen_category}")
+        print(f"Scored {score} points in {chosen_category.value}")
 
-    def play_game(self):
-        """Play complete game until max rounds or all players finished"""
+    def play_game(self) -> None:
+        """Play complete game until max rounds or all players finished."""
         print("Starting Yatzy Game!")
         print("Players:", [player.name for player in self.players])
 
@@ -67,8 +65,8 @@ class Game:
 
         self.display_final_results()
 
-    def display_final_results(self):
-        """Display final scores and winner"""
+    def display_final_results(self) -> None:
+        """Display final scores and winner."""
         print("\n=== FINAL RESULTS ===")
 
         scores = []
@@ -80,8 +78,8 @@ class Game:
         scores.sort(key=lambda x: x[1], reverse=True)
         print(f"\n🎉 Winner: {scores[0][0]} with {scores[0][1]} points!")
 
-    def get_game_state(self):
-        """Return current game state for testing"""
+    def get_game_state(self) -> dict:
+        """Return current game state for testing."""
         return {
             "round": self.current_round,
             "scores": {

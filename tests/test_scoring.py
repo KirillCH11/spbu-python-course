@@ -1,45 +1,45 @@
 import pytest
-from project.Yatzy.scoring import calculate_score
+from project.Yatzy.scoring import calculate_score, Category
 
 
 class TestScoring:
     def test_upper_section(self):
         dice = [1, 1, 2, 3, 4]
-        assert calculate_score(dice, "ones") == 2
-        assert calculate_score(dice, "twos") == 2
-        assert calculate_score(dice, "threes") == 3
-        assert calculate_score(dice, "fours") == 4
+        assert calculate_score(dice, Category.ONES) == 2
+        assert calculate_score(dice, Category.TWOS) == 2
+        assert calculate_score(dice, Category.THREES) == 3
+        assert calculate_score(dice, Category.FOURS) == 4
 
     def test_pair(self):
-        assert calculate_score([1, 1, 2, 3, 4], "pair") == 2
-        assert calculate_score([1, 1, 2, 2, 3], "pair") == 4  # Highest pair
-        assert calculate_score([1, 2, 3, 4, 5], "pair") == 0
+        assert calculate_score([1, 1, 2, 3, 4], Category.PAIR) == 2
+        assert calculate_score([1, 1, 2, 2, 3], Category.PAIR) == 4  # Highest pair
+        assert calculate_score([1, 2, 3, 4, 5], Category.PAIR) == 0
 
     def test_two_pairs(self):
-        assert calculate_score([1, 1, 2, 2, 3], "two_pairs") == 6
-        assert calculate_score([1, 1, 2, 3, 4], "two_pairs") == 0
+        assert calculate_score([1, 1, 2, 2, 3], Category.TWO_PAIRS) == 6
+        assert calculate_score([1, 1, 2, 3, 4], Category.TWO_PAIRS) == 0
 
     def test_three_kind(self):
-        assert calculate_score([1, 1, 1, 2, 3], "three_kind") == 3
-        assert calculate_score([1, 2, 3, 4, 5], "three_kind") == 0
+        assert calculate_score([1, 1, 1, 2, 3], Category.THREE_KIND) == 3
+        assert calculate_score([1, 2, 3, 4, 5], Category.THREE_KIND) == 0
 
     def test_four_kind(self):
-        assert calculate_score([1, 1, 1, 1, 2], "four_kind") == 4
-        assert calculate_score([1, 1, 1, 2, 3], "four_kind") == 0
+        assert calculate_score([1, 1, 1, 1, 2], Category.FOUR_KIND) == 4
+        assert calculate_score([1, 1, 1, 2, 3], Category.FOUR_KIND) == 0
 
     def test_straights(self):
-        assert calculate_score([1, 2, 3, 4, 5], "small_straight") == 15
-        assert calculate_score([2, 3, 4, 5, 6], "large_straight") == 20
-        assert calculate_score([1, 2, 3, 4, 6], "small_straight") == 0
+        assert calculate_score([1, 2, 3, 4, 5], Category.SMALL_STRAIGHT) == 15
+        assert calculate_score([2, 3, 4, 5, 6], Category.LARGE_STRAIGHT) == 20
+        assert calculate_score([1, 2, 3, 4, 6], Category.SMALL_STRAIGHT) == 0
 
     def test_full_house(self):
-        assert calculate_score([1, 1, 2, 2, 2], "full_house") == 8
-        assert calculate_score([1, 1, 1, 2, 2], "full_house") == 7
-        assert calculate_score([1, 1, 1, 1, 2], "full_house") == 0
+        assert calculate_score([1, 1, 2, 2, 2], Category.FULL_HOUSE) == 8
+        assert calculate_score([1, 1, 1, 2, 2], Category.FULL_HOUSE) == 7
+        assert calculate_score([1, 1, 1, 1, 2], Category.FULL_HOUSE) == 0
 
     def test_chance(self):
-        assert calculate_score([1, 2, 3, 4, 5], "chance") == 15
+        assert calculate_score([1, 2, 3, 4, 5], Category.CHANCE) == 15
 
     def test_yatzy(self):
-        assert calculate_score([1, 1, 1, 1, 1], "yatzy") == 50
-        assert calculate_score([1, 1, 1, 1, 2], "yatzy") == 0
+        assert calculate_score([1, 1, 1, 1, 1], Category.YATZY) == 50
+        assert calculate_score([1, 1, 1, 1, 2], Category.YATZY) == 0
