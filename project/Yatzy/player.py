@@ -1,34 +1,71 @@
-import random
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
 from .scorecard import ScoreCard
 from .scoring import Category, calculate_score
 
 
 class Player(ABC):
-    """Abstract base class for all players."""
+    """Abstract base class for all Yatzy players."""
 
-    def __init__(self, name: str):
-        self.name = name
-        self.scorecard = ScoreCard()
+    def __init__(self, name: str) -> None:
+        """
+        Initialize player with name and empty scorecard.
+
+        Args:
+            name: Player name
+        """
+        self.name: str = name
+        self.scorecard: ScoreCard = ScoreCard()
 
     @abstractmethod
-    def choose_dice_to_keep(self, dice_values: list, roll_count: int) -> list:
-        """Choose which dice to keep for next roll."""
+    def choose_dice_to_keep(
+        self, dice_values: List[int], roll_count: int
+    ) -> List[bool]:
+        """
+        Choose which dice to keep for next roll.
+
+        Args:
+            dice_values: Current dice values
+            roll_count: Current roll number (1, 2, or 3)
+
+        Returns:
+            List of booleans indicating which dice to keep
+        """
         pass
 
     @abstractmethod
     def choose_category(
-        self, dice_values: list, available_categories: list
+        self, dice_values: List[int], available_categories: List[Category]
     ) -> Optional[Category]:
-        """Choose category to score in."""
+        """
+        Choose category to score in.
+
+        Args:
+            dice_values: Final dice values
+            available_categories: List of categories that can be scored
+
+        Returns:
+            Chosen category or None if no choice made
+        """
         pass
 
 
 class ConservativeBot(Player):
     """Bot that prefers safe moves and guaranteed points."""
 
-    def choose_dice_to_keep(self, dice_values: list, roll_count: int) -> list:
+    def choose_dice_to_keep(
+        self, dice_values: List[int], roll_count: int
+    ) -> List[bool]:
+        """
+        Keep dice that are part of pairs or have high values.
+
+        Args:
+            dice_values: Current dice values
+            roll_count: Current roll number
+
+        Returns:
+            List indicating which dice to keep
+        """
         counts = [dice_values.count(i) for i in range(1, 7)]
         keep_mask = [False] * 5
 
@@ -40,8 +77,18 @@ class ConservativeBot(Player):
         return keep_mask
 
     def choose_category(
-        self, dice_values: list, available_categories: list
+        self, dice_values: List[int], available_categories: List[Category]
     ) -> Optional[Category]:
+        """
+        Choose category with highest possible score.
+
+        Args:
+            dice_values: Final dice values
+            available_categories: Available categories
+
+        Returns:
+            Category with highest score
+        """
         best_score = -1
         best_category = None
 
@@ -57,7 +104,19 @@ class ConservativeBot(Player):
 class RiskyBot(Player):
     """Bot that goes for high-risk, high-reward moves."""
 
-    def choose_dice_to_keep(self, dice_values: list, roll_count: int) -> list:
+    def choose_dice_to_keep(
+        self, dice_values: List[int], roll_count: int
+    ) -> List[bool]:
+        """
+        Keep only high values and triplets.
+
+        Args:
+            dice_values: Current dice values
+            roll_count: Current roll number
+
+        Returns:
+            List indicating which dice to keep
+        """
         keep_mask = [value >= 4 for value in dice_values]
 
         counts = [dice_values.count(i) for i in range(1, 7)]
@@ -69,8 +128,18 @@ class RiskyBot(Player):
         return keep_mask
 
     def choose_category(
-        self, dice_values: list, available_categories: list
+        self, dice_values: List[int], available_categories: List[Category]
     ) -> Optional[Category]:
+        """
+        Prefer high-value categories like Yatzy and straights.
+
+        Args:
+            dice_values: Final dice values
+            available_categories: Available categories
+
+        Returns:
+            High-value category if available, otherwise highest scoring
+        """
         high_value_categories = [
             Category.YATZY,
             Category.LARGE_STRAIGHT,
@@ -97,7 +166,19 @@ class RiskyBot(Player):
 class AdaptiveBot(Player):
     """Bot that adapts strategy based on game state."""
 
-    def choose_dice_to_keep(self, dice_values: list, roll_count: int) -> list:
+    def choose_dice_to_keep(
+        self, dice_values: List[int], roll_count: int
+    ) -> List[bool]:
+        """
+        Adapt strategy based on roll count
+
+        Args:
+            dice_values: Current dice values
+            roll_count: Current roll number
+
+        Returns:
+            List indicating which dice to keep
+        """
         counts = [dice_values.count(i) for i in range(1, 7)]
         keep_mask = [False] * 5
 
@@ -115,8 +196,18 @@ class AdaptiveBot(Player):
         return keep_mask
 
     def choose_category(
-        self, dice_values: list, available_categories: list
+        self, dice_values: List[int], available_categories: List[Category]
     ) -> Optional[Category]:
+        """
+        Prioritize upper section when close to bonus
+
+        Args:
+            dice_values: Final dice values
+            available_categories: Available categories
+
+        Returns:
+            Chosen category
+        """
         upper_categories = [
             Category.ONES,
             Category.TWOS,
