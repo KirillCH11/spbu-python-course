@@ -21,8 +21,9 @@ class ThreadSafeHashTable:
 
         self._length = self.manager.Value("i", 0)
 
-        self.buckets: List[Any] = self.manager.list()
-        self.bucket_locks: List[Any] = self.manager.list()
+        # Используем Any для объектов Manager, так как они имеют специфические типы
+        self.buckets: Any = self.manager.list()
+        self.bucket_locks: Any = self.manager.list()
 
         for i in range(size):
             # Each bucket stores key-value pairs and maintains order for iteration
