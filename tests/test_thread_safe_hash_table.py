@@ -11,6 +11,13 @@ from project.thread_safe_hash_table import (
 )
 
 
+def process_worker(process_id: int, shared_table: ThreadSafeHashTable) -> None:
+    """Worker function for multiprocessing test (must be at module level)."""
+    for i in range(10):
+        key = f"process_{process_id}_item_{i}"
+        shared_table[key] = f"value_{process_id}_{i}"
+
+
 class TestThreadSafeHashTable:
     """Test cases for ThreadSafeHashTable class."""
 
@@ -264,11 +271,6 @@ def test_concurrent_updates() -> None:
 def test_multiprocessing_support() -> None:
     """Test that hash table works with multiprocessing."""
     table = ThreadSafeHashTable(size=5)
-
-    def process_worker(process_id: int, shared_table: ThreadSafeHashTable) -> None:
-        for i in range(10):
-            key = f"process_{process_id}_item_{i}"
-            shared_table[key] = f"value_{process_id}_{i}"
 
     processes = []
     for i in range(2):
