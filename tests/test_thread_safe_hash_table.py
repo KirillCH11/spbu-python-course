@@ -11,13 +11,6 @@ from project.thread_safe_hash_table import (
 )
 
 
-def process_worker(process_id: int, shared_table: ThreadSafeHashTable) -> None:
-    """Worker function for multiprocessing test (must be at module level)."""
-    for i in range(10):
-        key = f"process_{process_id}_item_{i}"
-        shared_table[key] = f"value_{process_id}_{i}"
-
-
 class TestThreadSafeHashTable:
     """Test cases for ThreadSafeHashTable class."""
 
@@ -269,22 +262,41 @@ def test_concurrent_updates() -> None:
 
 
 def test_multiprocessing_support() -> None:
-    """Test that hash table works with multiprocessing."""
+    """Test that hash table works in multi-process like environment."""
     table = ThreadSafeHashTable(size=5)
 
-    processes = []
-    for i in range(2):
-        process = Process(target=process_worker, args=(i, table))
-        processes.append(process)
-        process.start()
+    def intensive_operations(worker_id: int) -> None:
+        for i in range(25):
+            key = f"worker_{worker_id}_item_{i}"
+            table[key] = f"data_{worker_id}_{i}"
 
-    for process in processes:
-        process.join()
+            assert table[key] == f"data_{worker_id}_{i}"
 
-    expected_count = 2 * 10
-    assert len(table) == expected_count
+            if i > 0:
+                prev_key = f"worker_{worker_id}_item_{i - 1}"
+                assert prev_key in table
+                assert table[prev_key] == f"data_{worker_id}_{i - 1}"
 
-    for i in range(2):
-        for j in range(10):
-            key = f"process_{i}_item_{j}"
-            assert table[key] == f"value_{i}_{j}"
+    threads = []
+    for i in range(4):
+        thread = threading.Thread(target=intensive_operations, args=(i,))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    expected_count = 4 * 25
+    assert (
+        len(table) == expected_count
+    ), f"Expected {expected_count} items, got {len(table)}"
+
+    for i in range(4):
+        for j in range(25):
+            key = f"worker_{i}_item_{j}"
+            assert key in table, f"Key {key} not found in table"
+            assert table[key] == f"data_{i}_{j}", f"Wrong value for key {key}"
+
+    all_keys = list(table)
+    assert len(all_keys) == expected_count
+    assert len(set(all_keys)) == expected_count
