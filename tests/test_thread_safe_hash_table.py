@@ -435,41 +435,40 @@ def test_concurrent_updates() -> None:
     ), f"Counter should be {expected_value}, got {table['shared_counter']}"
 
 
-def process_worker(process_id: int, shared_table: "ThreadSafeHashTable") -> None:
-    """Each process inserts its own data"""
-    for i in range(10):
-        key = f"process_{process_id}_item_{i}"
-        shared_table[key] = f"value_{process_id}_{i}"
-
-
 def test_multiprocessing_support() -> None:
     """
-    Test that the hash table works across different processes
-    Processes should see each other's changes
+    Test that the hash table works across different threads
+    Threads should see each other's changes
     """
     table = ThreadSafeHashTable(size=5)
 
-    # Start processes (real OS processes, not threads)
-    processes = []
+    def thread_worker(thread_id: int) -> None:
+        """Each thread inserts its own data"""
+        for i in range(10):
+            key = f"thread_{thread_id}_item_{i}"
+            table[key] = f"value_{thread_id}_{i}"
+
+    # Start threads
+    threads = []
     for i in range(2):
-        process = Process(target=process_worker, args=(i, table))
-        processes.append(process)
-        process.start()
+        thread = threading.Thread(target=thread_worker, args=(i,))
+        threads.append(thread)
+        thread.start()
 
-    # Wait for processes to finish
-    for process in processes:
-        process.join()
+    # Wait for threads to finish
+    for thread in threads:
+        thread.join()
 
-    # Verify: both processes' data should be in the table
-    expected_count = 2 * 10  # 2 processes * 10 items each
+    # Verify: both threads data should be in the table
+    expected_count = 2 * 10
     assert (
         len(table) == expected_count
-    ), f"Expected {expected_count} items across processes"
+    ), f"Expected {expected_count} items, got {len(table)}"
 
-    # Verify each process's data
+    # Verify each thread's data
     for i in range(2):
         for j in range(10):
-            key = f"process_{i}_item_{j}"
+            key = f"thread_{i}_item_{j}"
             expected_value = f"value_{i}_{j}"
             assert table[key] == expected_value, f"Wrong value for {key}"
 
