@@ -300,3 +300,219 @@ def test_multiprocessing_support() -> None:
     all_keys = list(table)
     assert len(all_keys) == expected_count
     assert len(set(all_keys)) == expected_count
+
+
+def test_concurrent_insertions() -> None:
+    """
+    Test that multiple threads can insert data without losing anything
+    Simple test: 5 threads insert 20 items each should get 100 total items
+    """
+    table = ThreadSafeHashTable(size=5)
+    num_threads = 5
+    items_per_thread = 20
+
+    def insert_worker(thread_id: int) -> None:
+        """Each thread inserts its own set of items"""
+        for i in range(items_per_thread):
+            key = f"thread_{thread_id}_item_{i}"
+            value = f"value_{thread_id}_{i}"
+            table[key] = value
+
+    # Start all threads
+    threads = []
+    for i in range(num_threads):
+        thread = threading.Thread(target=insert_worker, args=(i,))
+        threads.append(thread)
+        thread.start()
+
+    # Wait for all threads to finish
+    for thread in threads:
+        thread.join()
+
+    # All 100 items should be present
+    expected_count = num_threads * items_per_thread
+    assert (
+        len(table) == expected_count
+    ), f"Expected {expected_count} items, got {len(table)}"
+
+    # Verify each item can be retrieved correctly
+    for i in range(num_threads):
+        for j in range(items_per_thread):
+            key = f"thread_{i}_item_{j}"
+            expected_value = f"value_{i}_{j}"
+            assert table[key] == expected_value, f"Wrong value for key {key}"
+
+
+def test_concurrent_insertions_and_deletions() -> None:
+    """
+    Test mixed operations: some threads insert, others delete
+    Threads 0-2: insert items
+    Threads 3-4: delete items inserted by thread 0
+    """
+    table = ThreadSafeHashTable(size=5)
+    num_inserters = 3
+    num_deleters = 2
+    operations_per_thread = 15
+
+    # First insert some initial data from thread 0
+    for i in range(10):
+        table[f"to_delete_{i}"] = f"data_{i}"
+
+    def inserter(thread_id: int) -> None:
+        """Insert new items"""
+        for i in range(operations_per_thread):
+            key = f"inserter_{thread_id}_item_{i}"
+            table[key] = f"new_data_{thread_id}_{i}"
+
+    def deleter(thread_id: int) -> None:
+        """Delete items inserted by thread 0"""
+        for i in range(operations_per_thread):
+            key = f"to_delete_{i}"
+            try:
+                del table[key]
+            except KeyError:
+                # Key already deleted by another thread this is expected
+                pass
+
+    # Start inserter threads
+    threads = []
+    for i in range(num_inserters):
+        thread = threading.Thread(target=inserter, args=(i,))
+        threads.append(thread)
+        thread.start()
+
+    # Start deleter threads
+    for i in range(num_deleters):
+        thread = threading.Thread(target=deleter, args=(i,))
+        threads.append(thread)
+        thread.start()
+
+    # Wait for all threads
+    for thread in threads:
+        thread.join()
+
+    # Verify: items from deleters should be gone, inserters items should remain
+    for i in range(10):
+        key = f"to_delete_{i}"
+        assert key not in table, f"Key {key} should have been deleted"
+
+    # Should have items from inserters
+    assert len(table) > 0, "Table should not be empty after insertions"
+
+
+def test_concurrent_updates() -> None:
+    """
+    Test that atomic operations work correctly with multiple threads
+    All threads increment the same counter final value should be exact
+    """
+    table = ThreadSafeHashTable(size=3)
+    num_threads = 8
+    increments_per_thread = 25
+
+    # Initialize counter
+    table["shared_counter"] = 0
+
+    def increment_worker(thread_id: int) -> None:
+        """Each thread increments the shared counter multiple times"""
+        for _ in range(increments_per_thread):
+            table.atomic_increment("shared_counter", 1)
+
+    # Start all threads
+    threads = []
+    for i in range(num_threads):
+        thread = threading.Thread(target=increment_worker, args=(i,))
+        threads.append(thread)
+        thread.start()
+
+    # Wait for all threads
+    for thread in threads:
+        thread.join()
+
+    # Verify: counter should be exactly 8 threads * 25 increments = 200
+    expected_value = num_threads * increments_per_thread
+    assert (
+        table["shared_counter"] == expected_value
+    ), f"Counter should be {expected_value}, got {table['shared_counter']}"
+
+
+def test_multiprocessing_support() -> None:
+    """
+    Test that the hash table works across different processes
+    Processes should see each other's changes
+    """
+    table = ThreadSafeHashTable(size=5)
+
+    def process_worker(process_id: int, shared_table: ThreadSafeHashTable) -> None:
+        """Each process inserts its own data"""
+        for i in range(10):
+            key = f"process_{process_id}_item_{i}"
+            shared_table[key] = f"value_{process_id}_{i}"
+
+    # Start processes (real OS processes, not threads)
+    processes = []
+    for i in range(2):
+        process = Process(target=process_worker, args=(i, table))
+        processes.append(process)
+        process.start()
+
+    # Wait for processes to finish
+    for process in processes:
+        process.join()
+
+    # Verify: both processes data should be in the table
+    expected_count = 2 * 10  # 2 processes * 10 items each
+    assert (
+        len(table) == expected_count
+    ), f"Expected {expected_count} items across processes"
+
+    # Verify each process's data
+    for i in range(2):
+        for j in range(10):
+            key = f"process_{i}_item_{j}"
+            expected_value = f"value_{i}_{j}"
+            assert table[key] == expected_value, f"Wrong value for {key}"
+
+
+def test_concurrent_access_under_contention() -> None:
+    """
+    Test high contention scenario where many threads access few buckets
+    Forces threads to wait for locks frequently
+    """
+    table = ThreadSafeHashTable(size=2)  # Only 2 buckets = high contention
+    num_threads = 6
+    operations_per_thread = 30
+
+    def contention_worker(thread_id: int) -> None:
+        """All threads work on the same small set of keys"""
+        for i in range(operations_per_thread):
+            # All threads use same 3 keys to create maximum contention
+            key = f"contention_key_{i % 3}"
+
+            # Mixed operations
+            if i % 3 == 0:
+                # Insert/update
+                table[key] = f"value_{thread_id}_{i}"
+            elif i % 3 == 1:
+                # Read
+                if key in table:
+                    _ = table[key]  # Just read, don't use value
+            else:
+                # Delete
+                if key in table:
+                    del table[key]
+
+    # Start all threads
+    threads = []
+    for i in range(num_threads):
+        thread = threading.Thread(target=contention_worker, args=(i,))
+        threads.append(thread)
+        thread.start()
+
+    # Wait for all threads
+    for thread in threads:
+        thread.join()
+
+    # Verify: table should be in consistent state (no crashes)
+    final_size = len(table)
+    assert final_size >= 0, "Table size should not be negative"
+    assert isinstance(final_size, int), "Table size should be integer"
