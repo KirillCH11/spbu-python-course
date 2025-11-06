@@ -435,18 +435,19 @@ def test_concurrent_updates() -> None:
     ), f"Counter should be {expected_value}, got {table['shared_counter']}"
 
 
+def process_worker(process_id: int, shared_table: "ThreadSafeHashTable") -> None:
+    """Each process inserts its own data"""
+    for i in range(10):
+        key = f"process_{process_id}_item_{i}"
+        shared_table[key] = f"value_{process_id}_{i}"
+
+
 def test_multiprocessing_support() -> None:
     """
     Test that the hash table works across different processes
     Processes should see each other's changes
     """
     table = ThreadSafeHashTable(size=5)
-
-    def process_worker(process_id: int, shared_table: ThreadSafeHashTable) -> None:
-        """Each process inserts its own data"""
-        for i in range(10):
-            key = f"process_{process_id}_item_{i}"
-            shared_table[key] = f"value_{process_id}_{i}"
 
     # Start processes (real OS processes, not threads)
     processes = []
@@ -459,7 +460,7 @@ def test_multiprocessing_support() -> None:
     for process in processes:
         process.join()
 
-    # Verify: both processes data should be in the table
+    # Verify: both processes' data should be in the table
     expected_count = 2 * 10  # 2 processes * 10 items each
     assert (
         len(table) == expected_count
