@@ -250,29 +250,35 @@ def test_concurrent_access_under_contention() -> None:
     _ = list(table.reverse_iter())
 
 
+# Top-level worker for multiprocessing test (must be picklable)
+def _proc_worker_mp(table, wid: int, count: int) -> None:
+    for i in range(count):
+        k = f"w{wid}_{i}"
+        table[k] = f"val{wid}_{i}"
+        assert table[k] == f"val{wid}_{i}"
+        if i > 0:
+            _ = k in table
+
+
 def test_real_multiprocessing_support() -> None:
     """
     Test that hash table works in multi-process environment.
     Processes should see each other's changes via Manager-backed storage.
     """
     table = ThreadSafeHashTable(size=8)
+    per_proc = 40
 
-    def proc_worker(wid: int) -> None:
-        for i in range(40):
-            k = f"w{wid}_{i}"
-            table[k] = f"val{wid}_{i}"
-            assert table[k] == f"val{wid}_{i}"
-            if i > 0:
-                _ = k in table
-
-    procs = [mp.Process(target=proc_worker, args=(i,)) for i in range(4)]
+    procs = [
+        mp.Process(target=_proc_worker_mp, args=(table, i, per_proc)) for i in range(4)
+    ]
     for p in procs:
         p.start()
     for p in procs:
         p.join()
+        assert p.exitcode == 0
 
     for w in range(4):
-        for i in range(40):
+        for i in range(per_proc):
             k = f"w{w}_{i}"
             assert k in table
             assert table[k] == f"val{w}_{i}"
