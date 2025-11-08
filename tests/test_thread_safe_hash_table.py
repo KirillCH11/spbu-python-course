@@ -1,7 +1,6 @@
 import pytest
 import threading
 import multiprocessing as mp
-import time
 from typing import Any, List
 
 from project.thread_safe_hash_table import ThreadSafeHashTable
@@ -250,8 +249,16 @@ def test_concurrent_access_under_contention() -> None:
     _ = list(table.reverse_iter())
 
 
-# Top-level worker for multiprocessing test (must be picklable)
-def _proc_worker_mp(table, wid: int, count: int) -> None:
+# Global reference for multiprocessing worker (avoid pickling the table)
+_MP_TABLE_REF = None
+
+
+def _proc_worker_mp_use_global(wid: int, count: int) -> None:
+    """
+    Top-level worker for multiprocessing test.
+    Uses a global reference to the Manager-backed table to avoid pickling errors.
+    """
+    table = _MP_TABLE_REF
     for i in range(count):
         k = f"w{wid}_{i}"
         table[k] = f"val{wid}_{i}"
@@ -265,11 +272,14 @@ def test_real_multiprocessing_support() -> None:
     Test that hash table works in multi-process environment.
     Processes should see each other's changes via Manager-backed storage.
     """
+    global _MP_TABLE_REF
     table = ThreadSafeHashTable(size=8)
-    per_proc = 40
+    _MP_TABLE_REF = table  # expose proxy to child processes
 
+    per_proc = 40
     procs = [
-        mp.Process(target=_proc_worker_mp, args=(table, i, per_proc)) for i in range(4)
+        mp.Process(target=_proc_worker_mp_use_global, args=(i, per_proc))
+        for i in range(4)
     ]
     for p in procs:
         p.start()
